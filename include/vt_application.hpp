@@ -114,6 +114,7 @@ private:
 	std::shared_ptr<isobus::DeviceDescriptorObjectPool> ddop = nullptr; ///< Stores our application's DDOP
 	std::uint32_t slowUpdateTimestamp_ms = 0; ///< A timestamp to limit some polled data to 1Hz update rate
 	bool languageDataRequested = false; ///< Stores if we've requested the current language data yet
+	uint32_t rpmLastUpdate = 0;
 
 	//pca9685_handle_t pca9685_dev; ///< To have blinking LEDs :9
 };

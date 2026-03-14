@@ -218,5 +218,19 @@
 #define autoManual_ObjPtr 27008 //0x6980
 #define currentAlarms1_ObjPtr 27009 //0x6981
 #define currentAlarms2_ObjPtr 27010 //0x6982
+#define OUTPUT_NUMBER_15 27011
+#define OUTPUT_NUMBER_16 27012
+#define OUTPUT_NUMBER_17 27013
+#define OUTPUT_NUMBER_18 27014
+#define OUTPUT_NUMBER_19 27015
+#define OUTPUT_NUMBER_20 27016
+#define CONTAINER_31 27017
+#define NUMBER_RPM_1 27018
+#define NUMBER_RPM_2 27019
+#define NUMBER_RPM_3 27020
+#define NUMBER_RPM_4 27021
+#define NUMBER_RPM_5 27022
+#define NUMBER_RPM_6 27023
+
 
 #endif // OBJECT_POOL_HPP

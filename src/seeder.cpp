@@ -24,6 +24,7 @@ bool Seeder::initialize()
 {
 	bool retVal = true;
 	
+
 	// Automatically load the desired CAN driver based on the available drivers
 	std::shared_ptr<isobus::CANHardwarePlugin> canDriver = nullptr;
 	// Automatically load the desired CAN driver based on the available drivers
@@ -39,7 +40,10 @@ bool Seeder::initialize()
 		std::cout << "If you want to use a different driver, please add it to the list above." << std::endl;
 		return false;
 	}
-
+		//Configuracion para JD
+	isobus::CANNetworkManager::CANNetwork.get_configuration().set_number_of_packets_per_dpo_message(255); 
+	isobus::CANNetworkManager::CANNetwork.get_configuration().set_number_of_packets_per_cts_message(255);
+	vTaskDelay(3000);
 	isobus::CANStackLogger::set_can_stack_logger_sink(&logger);
 	isobus::CANStackLogger::set_log_level(isobus::CANStackLogger::LoggingLevel::Debug); // Change this to Debug to see more information
 	isobus::CANHardwareInterface::set_number_of_can_channels(1);
@@ -52,7 +56,7 @@ bool Seeder::initialize()
 	}
 
 	//std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
+	vTaskDelay(1500);
 	isobus::NAME TestDeviceNAME(0);
 
 	//! This is an example device that is using a manufacturer code that is currently unused at time of writing
@@ -72,6 +76,7 @@ bool Seeder::initialize()
 	auto PartnerVT = isobus::CANNetworkManager::CANNetwork.create_partnered_control_function(0, vtNameFilters);
 
 	VTApplication = std::make_unique<SeederVtApplication>(PartnerVT, InternalECU);
+	//virtualTerminalClient = std::make_shared<isobus::VirtualTerminalClient>(TestPartnerVT, TestInternalECU);
 	VTApplication->initialize();
 
 	return retVal;

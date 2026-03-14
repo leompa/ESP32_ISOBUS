@@ -14,6 +14,8 @@
 #include "isobus/utility/iop_file_interface.hpp"
 #include "isobus/utility/system_timing.hpp"
 #include "object_pool.hpp"
+#include <rpm_counter.hpp>
+#include "esp_timer.h"
 
 #include <cassert>
 #include <iostream>
@@ -47,9 +49,12 @@ bool SeederVtApplication::initialize()
 	std::string objectPoolHash = isobus::IOPFileInterface::hash_object_pool_to_version(objectPool);
 */
 //	virtualTerminalClient = std::make_shared<isobus::VirtualTerminalClient>(TestPartnerVT, TestInternalECU);
-	
+ 	
+	//incio ejes
+	rpm_init();
 	const std::uint8_t *testPool = object_pool_start;
-	VTClientInterface->set_object_pool(0, testPool, (object_pool_end - object_pool_start) -1,"FerinekVoltIgaza");
+	
+	VTClientInterface->set_object_pool(0, testPool, (object_pool_end - object_pool_start) - 1);
 
 //	VTClientInterface->set_object_pool(0, objectPool.data(), static_cast<std::uint32_t>(objectPool.size()), objectPoolHash);
 	VTClientInterface->get_vt_soft_key_event_dispatcher().add_listener([this](const isobus::VirtualTerminalClient::VTKeyEvent &event) { this->handle_vt_key_events(event); });
@@ -82,6 +87,12 @@ bool SeederVtApplication::initialize()
 	VTClientUpdateHelper.add_tracked_numeric_value(utVersion_VarNum);
 	VTClientUpdateHelper.add_tracked_numeric_value(currentAlarms1_ObjPtr);
 	VTClientUpdateHelper.add_tracked_numeric_value(currentAlarms2_ObjPtr);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_1);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_2);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_3);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_4);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_5);
+	VTClientUpdateHelper.add_tracked_numeric_value(NUMBER_RPM_6);
 
 	// Track the attribute values we want to update
 	VTClientUpdateHelper.add_tracked_attribute(section1Status_OutRect, 5, (std::uint32_t)solidGreen_FillAttr);
@@ -315,11 +326,11 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 	}
 
 	std::uint32_t fillAttribute = solidRed_FillAttr;
-	if (false)
-	{
+	if (rpm_get(sectionIndex)>0)
+	{	
 		fillAttribute = solidGreen_FillAttr;
 	}
-	else if (false)
+	else if (rpm_get(sectionIndex)>20)
 	{
 		fillAttribute = solidYellow_FillAttr;
 	}
@@ -330,12 +341,16 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 
 	std::uint16_t switchPointerId = UNDEFINED;
 	std::uint16_t statusRectangleId = UNDEFINED;
+	bool updateRpm = false;
+	if (esp_timer_get_time() - rpmLastUpdate > 1000) updateRpm=true;
 	switch (sectionIndex)
 	{
 		case 0:
 		{
 			switchPointerId = section1EnableState_ObjPtr;
 			statusRectangleId = section1Status_OutRect;
+			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_1, rpm_get(0));
+
 		}
 		break;
 
@@ -343,6 +358,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section2EnableState_ObjPtr;
 			statusRectangleId = section2Status_OutRect;
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_2, rpm_get(1));
 		}
 		break;
 
@@ -350,6 +366,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section3EnableState_ObjPtr;
 			statusRectangleId = section3Status_OutRect;
+			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_3, rpm_get(2));
 		}
 		break;
 
@@ -357,6 +374,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section4EnableState_ObjPtr;
 			statusRectangleId = section4Status_OutRect;
+			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_4, rpm_get(3));
 		}
 		break;
 
@@ -364,6 +382,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section5EnableState_ObjPtr;
 			statusRectangleId = section5Status_OutRect;
+			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_5, rpm_get(4));
 		}
 		break;
 
@@ -371,6 +390,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section6EnableState_ObjPtr;
 			statusRectangleId = section6Status_OutRect;
+			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_6, rpm_get(5));
 		}
 		break;
 
@@ -511,6 +531,7 @@ bool SeederVtApplication::get_is_object_shown(std::uint16_t objectID) const
 	}
 	return retVal;
 }
+
 
 void SeederVtApplication::revert_to_previous_data_mask()
 {
