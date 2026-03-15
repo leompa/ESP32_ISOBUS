@@ -7,10 +7,10 @@
 #define NUM_SENSORS 4
 
 static const gpio_num_t pins[NUM_SENSORS] = {
-    (gpio_num_t)entrada1,
-    (gpio_num_t)entrada2,
-    (gpio_num_t)entrada3,
-    (gpio_num_t)entrada4
+    GPIO_NUM_27,
+    GPIO_NUM_26,
+    GPIO_NUM_25,
+    GPIO_NUM_33
 };
 
 volatile uint64_t last_pulse_time[NUM_SENSORS] = {0};
