@@ -4,13 +4,14 @@
 #include "esp_timer.h"
 #include "esp_attr.h"
 
-#define NUM_SENSORS 4
+#define NUM_SENSORS 5
 
 static const gpio_num_t pins[NUM_SENSORS] = {
-    (gpio_num_t)entrada1,
-    (gpio_num_t)entrada2,
-    (gpio_num_t)entrada3,
-    (gpio_num_t)entrada4
+    GPIO_NUM_27,
+    GPIO_NUM_26,
+    GPIO_NUM_25,
+    GPIO_NUM_33,
+    GPIO_NUM_32
 };
 
 volatile uint64_t last_pulse_time[NUM_SENSORS] = {0};
@@ -44,6 +45,14 @@ static void IRAM_ATTR isr3(void* arg)
     last_pulse_time[3] = now;
 }
 
+static void IRAM_ATTR isr4(void* arg)
+{
+    uint64_t now = esp_timer_get_time();
+    prev_pulse_time[4] = last_pulse_time[4];
+    last_pulse_time[4] = now;
+}
+
+
 void rpm_init()
 {
     gpio_config_t io_conf;
@@ -65,6 +74,7 @@ void rpm_init()
     gpio_isr_handler_add(pins[1], isr1, NULL);
     gpio_isr_handler_add(pins[2], isr2, NULL);
     gpio_isr_handler_add(pins[3], isr3, NULL);
+    gpio_isr_handler_add(pins[4], isr4, NULL);
 }
 
 int rpm_get(int index)
@@ -95,7 +105,7 @@ bool getRotacion()
 {
     int activos = 0;
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 5; i++)
     {
         if(rpm_get(i) > 0)
             activos++;

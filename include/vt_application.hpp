@@ -38,8 +38,8 @@ private:
 	/// @brief Lists the different alarm conditions that might exist
 	enum class AlarmType
 	{
-		NoMachineSpeed, ///< No MSS message, needed for section control
-		NoTaskController, ///< No TC, makes the demo less interesting
+		NotRpm, ///< No MSS message, needed for section control
+		SensorActive, ///< No TC, makes the demo less interesting
 		NoPCA,
 
 		Count ///< The number of alarm types
