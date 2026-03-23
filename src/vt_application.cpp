@@ -16,6 +16,7 @@
 #include "object_pool.hpp"
 #include <rpm_counter.hpp>
 #include "esp_timer.h"
+#include <sensor_simple.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -25,9 +26,9 @@ SeederVtApplication::SeederVtApplication(std::shared_ptr<isobus::PartneredContro
   VTClientInterface(std::make_shared<isobus::VirtualTerminalClient>(VTPartner, source)),
   VTClientUpdateHelper(VTClientInterface)
 {
-	alarms[AlarmType::NoMachineSpeed] = Alarm(10000); // 10 seconds
+	alarms[AlarmType::NotRpm] = Alarm(10000); // 10 seconds
 	alarms[AlarmType::NoPCA] = Alarm(10000); // 10 seconds
-	alarms[AlarmType::NoTaskController] = Alarm(30000); // 30 seconds, TC can take a while to connect
+	alarms[AlarmType::SensorActive] = Alarm(30000); // 30 seconds, TC can take a while to connect
 }
 
 extern "C" const uint8_t object_pool_start[] asm("_binary_object_pool_iop_start");
@@ -52,6 +53,7 @@ bool SeederVtApplication::initialize()
  	
 	//incio ejes
 	rpm_init();
+	sensor_init();
 	const std::uint8_t *testPool = object_pool_start;
 	
 	VTClientInterface->set_object_pool(0, testPool, (object_pool_end - object_pool_start) - 1);
@@ -320,17 +322,19 @@ void SeederVtApplication::toggle_section(std::uint8_t sectionIndex)
 void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 {
 	std::uint16_t newObject = offButtonSliderSmall_OutPict;
-	if (true)//aca manejo que color quiero dar 
+	if (true)//aca manejo que color quiero dar al boton
 	{
 		newObject = onButtonSliderSmall_OutPict;
 	}
 
+
+
 	std::uint32_t fillAttribute = solidRed_FillAttr;
-	if (rpm_get(sectionIndex)>0)
+	if (rpm_get(sectionIndex)>100)
 	{	
 		fillAttribute = solidGreen_FillAttr;
 	}
-	else if (rpm_get(sectionIndex)>20)
+	else if (rpm_get(sectionIndex)>0)
 	{
 		fillAttribute = solidYellow_FillAttr;
 	}
@@ -339,17 +343,18 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		fillAttribute = solidRed_FillAttr;
 	}
 
+	if (sectionIndex == 5 && sensor34_activo()) fillAttribute = solidRed_FillAttr;
+	else if (sectionIndex == 5) fillAttribute = solidGreen_FillAttr;
+
 	std::uint16_t switchPointerId = UNDEFINED;
 	std::uint16_t statusRectangleId = UNDEFINED;
-	bool updateRpm = false;
-	if (esp_timer_get_time() - rpmLastUpdate > 1000) updateRpm=true;
 	switch (sectionIndex)
 	{
 		case 0:
 		{
 			switchPointerId = section1EnableState_ObjPtr;
 			statusRectangleId = section1Status_OutRect;
-			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_1, rpm_get(0));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_1, rpm_get(0));
 
 		}
 		break;
@@ -366,7 +371,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section3EnableState_ObjPtr;
 			statusRectangleId = section3Status_OutRect;
-			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_3, rpm_get(2));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_3, rpm_get(2));
 		}
 		break;
 
@@ -374,7 +379,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section4EnableState_ObjPtr;
 			statusRectangleId = section4Status_OutRect;
-			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_4, rpm_get(3));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_4, rpm_get(3));
 		}
 		break;
 
@@ -382,7 +387,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section5EnableState_ObjPtr;
 			statusRectangleId = section5Status_OutRect;
-			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_5, rpm_get(4));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_5, rpm_get(4));
 		}
 		break;
 
@@ -390,7 +395,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section6EnableState_ObjPtr;
 			statusRectangleId = section6Status_OutRect;
-			if (updateRpm) VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_6, rpm_get(5));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_6, sensor34_activo() ? 0 : 100 );
 		}
 		break;
 
@@ -604,7 +609,7 @@ void SeederVtApplication::update_alarms()
 				activeAlarmsCount++;
 				switch (alarm.first)
 				{
-					case AlarmType::NoMachineSpeed:
+					case AlarmType::NotRpm:
 					{
 						if (1 == activeAlarmsCount)
 						{
@@ -615,7 +620,7 @@ void SeederVtApplication::update_alarms()
 					break;
 
 					case AlarmType::NoPCA:
-					case AlarmType::NoTaskController:
+					case AlarmType::SensorActive:
 					{
 						if (1 == activeAlarmsCount)
 						{
