@@ -121,7 +121,7 @@ bool rpm_get_eje_cero ()
 {
     bool alguno_en_cero = false;
 
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < 3; i++)
     {
         if(rpm_get(i) == 0)
             alguno_en_cero = true;
