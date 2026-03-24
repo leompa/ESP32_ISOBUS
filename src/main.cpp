@@ -54,12 +54,12 @@
     gpio_set_level(led_verde, 0);
     gpio_set_level(led_azul, 0);
 
-	
+	vTaskDelay(150);
     // Apagar relés
-    gpio_set_level(rele1, 1);
-    gpio_set_level(rele2, 1);
-	gpio_set_level(rele3, 1);
-	gpio_set_level(rele4, 1);
+    gpio_set_level(rele1, 0);
+    gpio_set_level(rele2, 0);
+	gpio_set_level(rele3, 0);
+	gpio_set_level(rele4, 0);
 }
 
 

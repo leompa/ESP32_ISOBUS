@@ -6,4 +6,6 @@ void rpm_init();
 
 int rpm_get(int index);
 
-bool getRotacion ();
+bool rpm_get_rotacion ();
+
+bool rpm_get_eje_cero ();

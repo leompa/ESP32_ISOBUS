@@ -26,9 +26,9 @@ SeederVtApplication::SeederVtApplication(std::shared_ptr<isobus::PartneredContro
   VTClientInterface(std::make_shared<isobus::VirtualTerminalClient>(VTPartner, source)),
   VTClientUpdateHelper(VTClientInterface)
 {
-	alarms[AlarmType::NotRpm] = Alarm(10000); // 10 seconds
+	alarms[AlarmType::NotRpm] = Alarm(3000); // 10 seconds
 	alarms[AlarmType::NoPCA] = Alarm(10000); // 10 seconds
-	alarms[AlarmType::SensorActive] = Alarm(30000); // 30 seconds, TC can take a while to connect
+	alarms[AlarmType::SensorActive] = Alarm(5000); // 30 seconds, TC can take a while to connect
 }
 
 extern "C" const uint8_t object_pool_start[] asm("_binary_object_pool_iop_start");
@@ -334,14 +334,15 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 	{	
 		fillAttribute = solidGreen_FillAttr;
 	}
-	else if (rpm_get(sectionIndex)>0)
-	{
-		fillAttribute = solidYellow_FillAttr;
-	}
-	else
+	else if (rpm_get_rotacion() && rpm_get(sectionIndex)==0 )
 	{
 		fillAttribute = solidRed_FillAttr;
 	}
+	else if (rpm_get(sectionIndex)==0)
+	{
+		fillAttribute = solidYellow_FillAttr;
+	}
+	
 
 	if (sectionIndex == 5 && sensor34_activo()) fillAttribute = solidRed_FillAttr;
 	else if (sectionIndex == 5) fillAttribute = solidGreen_FillAttr;
@@ -395,7 +396,7 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		{
 			switchPointerId = section6EnableState_ObjPtr;
 			statusRectangleId = section6Status_OutRect;
-			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_6, sensor34_activo() ? 0 : 100 );
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_6, sensor34_activo() ? 100 : 0 );
 		}
 		break;
 
@@ -596,7 +597,22 @@ void SeederVtApplication::update_ut_version_objects(isobus::VirtualTerminalClien
 }
 
 void SeederVtApplication::update_alarms()
-{
+{	//alarma sensor
+	if (sensor34_activo())
+		alarms[AlarmType::SensorActive].trigger();
+	else
+	    alarms[AlarmType::SensorActive].reset();
+
+	if (rpm_get_rotacion() && rpm_get_eje_cero())
+	{
+    	alarms[AlarmType::NotRpm].trigger();
+	}
+	else
+	{
+    	alarms[AlarmType::NotRpm].reset();
+	}
+	
+	
 	if (VTClientInterface->get_is_connected() && VTClientUpdateHelper.get_numeric_value(enableAlarms_VarNum))
 	{
 

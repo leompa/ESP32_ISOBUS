@@ -101,7 +101,7 @@ int rpm_get(int index)
     return 0;
 }
 
-bool getRotacion()
+bool rpm_get_rotacion()
 {
     int activos = 0;
 
@@ -115,4 +115,17 @@ bool getRotacion()
         return true;
 
     return false;
+}
+
+bool rpm_get_eje_cero ()  
+{
+    bool alguno_en_cero = false;
+
+    for(int i = 0; i < 5; i++)
+    {
+        if(rpm_get(i) == 0)
+            alguno_en_cero = true;
+    }
+
+    return alguno_en_cero;  
 }

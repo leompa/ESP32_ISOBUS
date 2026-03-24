@@ -19,5 +19,5 @@ void sensor_init()
 
 bool sensor34_activo()
 {
-    return gpio_get_level(SENSOR34) == 1;
+    return gpio_get_level(SENSOR34) == 0;
 }
