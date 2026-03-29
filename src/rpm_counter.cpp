@@ -22,7 +22,7 @@ static void IRAM_ATTR isr0(void* arg)
     uint64_t now = esp_timer_get_time();
     
     // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[0] < 4000ULL) {  
+    if (now - last_pulse_time[0] < 14000ULL) {  
         return;
     }
     
@@ -35,7 +35,7 @@ static void IRAM_ATTR isr1(void* arg)
     uint64_t now = esp_timer_get_time();
     
      // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[1] < 4000ULL) {  
+    if (now - last_pulse_time[1] < 24000ULL) {  
         return;
     }
 
@@ -47,7 +47,7 @@ static void IRAM_ATTR isr2(void* arg)
 {
     uint64_t now = esp_timer_get_time();
      // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[2] < 4000ULL) {  
+    if (now - last_pulse_time[2] < 24000ULL) {  
         return;
     }
     prev_pulse_time[2] = last_pulse_time[2];
@@ -72,7 +72,7 @@ static void IRAM_ATTR isr4(void* arg)
 void rpm_init()
 {
     gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_INTR_POSEDGE;
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
@@ -103,7 +103,7 @@ int rpm_get(int index)
     uint64_t t2 = last_pulse_time[index];
 
     // si hace más de 1 segundo que no hay pulsos
-    if(now - t2 > 2000000)
+    if(now - t2 > 4000000)
         return 0;
 
     if(t1 > 0 && t2 > t1)
