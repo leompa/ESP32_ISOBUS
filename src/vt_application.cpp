@@ -17,10 +17,12 @@
 #include <rpm_counter.hpp>
 #include "esp_timer.h"
 #include <sensor_simple.hpp>
+#include<outputs_manager.hpp>
 
 #include <cassert>
 #include <iostream>
 //#include "pca9685_handler.hpp"
+OutputsManager outputs;
 
 SeederVtApplication::SeederVtApplication(std::shared_ptr<isobus::PartneredControlFunction> VTPartner, std::shared_ptr<isobus::InternalControlFunction> source) :
   VTClientInterface(std::make_shared<isobus::VirtualTerminalClient>(VTPartner, source)),
@@ -54,6 +56,7 @@ bool SeederVtApplication::initialize()
 	//incio ejes
 	rpm_init();
 	sensor_init();
+	outputs.init();
 	const std::uint8_t *testPool = object_pool_start;
 	
 	VTClientInterface->set_object_pool(0, testPool, (object_pool_end - object_pool_start) - 1);
@@ -299,7 +302,7 @@ void SeederVtApplication::update()
 
 		update_alarms();
 		slowUpdateTimestamp_ms = isobus::SystemTiming::get_timestamp_ms();
-
+		outputs.update();
 		update_pca();
 	}
 	for (std::uint8_t i = 0; i < NUMBER_ONSCREEN_SECTIONS; ++i)
@@ -327,10 +330,8 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 		newObject = onButtonSliderSmall_OutPict;
 	}
 
-
-
 	std::uint32_t fillAttribute = solidRed_FillAttr;
-	if (rpm_get(sectionIndex)>100)
+	if (rpm_get(sectionIndex)>0)
 	{	
 		fillAttribute = solidGreen_FillAttr;
 	}
@@ -352,27 +353,26 @@ void SeederVtApplication::update_section_objects(std::uint8_t sectionIndex)
 	switch (sectionIndex)
 	{
 		case 0:
-		{
+		{	int rpmaux = rpm_get(0);
 			switchPointerId = section1EnableState_ObjPtr;
 			statusRectangleId = section1Status_OutRect;
-			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_1, rpm_get(0));
-
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_1, rpmaux);
 		}
 		break;
 
 		case 1:
-		{
+		{	int rpmaux = rpm_get(1);
 			switchPointerId = section2EnableState_ObjPtr;
 			statusRectangleId = section2Status_OutRect;
-			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_2, rpm_get(1));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_2, rpmaux);
 		}
 		break;
 
 		case 2:
-		{
+		{	int rpmaux = rpm_get(2);
 			switchPointerId = section3EnableState_ObjPtr;
 			statusRectangleId = section3Status_OutRect;
-			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_3, rpm_get(2));
+			VTClientUpdateHelper.set_numeric_value(NUMBER_RPM_3, rpmaux);
 		}
 		break;
 
@@ -599,17 +599,25 @@ void SeederVtApplication::update_ut_version_objects(isobus::VirtualTerminalClien
 void SeederVtApplication::update_alarms()
 {	//alarma sensor
 	if (sensor34_activo())
-		alarms[AlarmType::SensorActive].trigger();
-	else
-	    alarms[AlarmType::SensorActive].reset();
+		{
+			alarms[AlarmType::SensorActive].trigger();
+			outputs.set(4);
+		}
+	else if (rpm_get_rotacion() && outputs.getState(4) && !rpm_get_eje_cero())
+	    {
+			alarms[AlarmType::SensorActive].reset();
+			outputs.off(4);
+		}
 
 	if (rpm_get_rotacion() && rpm_get_eje_cero())
 	{
     	alarms[AlarmType::NotRpm].trigger();
+		outputs.set(4);
 	}
-	else
+	else if (outputs.getState(4) && !sensor34_activo())
 	{
     	alarms[AlarmType::NotRpm].reset();
+		outputs.off(4);
 	}
 	
 	

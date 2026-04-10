@@ -24,12 +24,6 @@
  #define rele3     GPIO_NUM_13
  #define rele4     GPIO_NUM_15
 
- #define salida1   GPIO_NUM_2 
- #define salida2   GPIO_NUM_4
- #define salida3   GPIO_NUM_5
- #define salida4   GPIO_NUM_18
- #define salida5   GPIO_NUM_19
-
  #define led_rojo   GPIO_NUM_22
  #define led_verde  GPIO_NUM_23
  #define led_azul   GPIO_NUM_21
@@ -68,6 +62,10 @@
 	vTaskDelay(1500);
 	init_hardware_outputs();
 	gpio_set_level(led_rojo, 1);
+	gpio_set_level(rele1, 0);
+    gpio_set_level(rele2, 0);
+	gpio_set_level(rele3, 0);
+	gpio_set_level(rele4, 0);
 	//PCA9685Handler::init();
 	vTaskDelay(1500);
 	Seeder seederExample;
