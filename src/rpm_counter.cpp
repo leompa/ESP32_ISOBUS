@@ -16,13 +16,15 @@ static const gpio_num_t pins[NUM_SENSORS] = {
 
 volatile uint64_t last_pulse_time[NUM_SENSORS] = {0};
 volatile uint64_t prev_pulse_time[NUM_SENSORS] = {0};
+static int limit_rpm[NUM_SENSORS] = {0};
+static bool limit_set[NUM_SENSORS] = {false};
 
 static void IRAM_ATTR isr0(void* arg)
 {
     uint64_t now = esp_timer_get_time();
     
     // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[0] < 14000ULL) {  
+    if (now - last_pulse_time[0] < 24000ULL) {  
         return;
     }
     
@@ -138,9 +140,31 @@ bool rpm_get_eje_cero ()
 
     for(int i = 0; i < 3; i++)
     {
-        if(rpm_get(i) == 0)
+        if(rpm_get(i) <= limit_rpm[i])
             alguno_en_cero = true;
     }
 
     return alguno_en_cero;  
+}
+
+void rpm_set_limit(int index)
+{
+    if(index < 0 || index >= NUM_SENSORS)
+        return;
+
+    int current = rpm_get(index);
+
+    if(current >= 0)
+    {
+        limit_rpm[index] = current;
+        limit_set[index] = true;
+    }
+}
+
+void rpm_set_all_limits()
+{
+    for(int i = 0; i < NUM_SENSORS; i++)
+    {
+        rpm_set_limit(i);
+    }
 }

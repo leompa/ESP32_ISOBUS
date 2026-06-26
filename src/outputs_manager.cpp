@@ -24,10 +24,8 @@ void OutputsManager::init()
 
 bool OutputsManager::getState(int index)
 {
-     {
         if (index >= NUM_OUT) return false;
         return states[index];
-    }
 }
 
 void OutputsManager::set(int index)

@@ -177,10 +177,8 @@ void SeederVtApplication::handle_vt_key_events(const isobus::VirtualTerminalClie
 			case autoManualToggle_Button:
 			{
 				VTClientUpdateHelper.set_numeric_value(autoManual_ObjPtr, manualMode_Container);
-				for (std::uint8_t i = 0; i < NUMBER_ONSCREEN_SECTIONS; ++i)
-				{
-					update_section_objects(i);
-				}
+				rpm_set_all_limits ();
+				
 			}
 			break;
 
