@@ -5,6 +5,7 @@
 #include "esp_attr.h"
 
 #define NUM_SENSORS 5
+#define MIN_PULSE_US 120000ULL   // Máximo 500 RPM
 
 static const gpio_num_t pins[NUM_SENSORS] = {
     GPIO_NUM_27,
@@ -24,7 +25,7 @@ static void IRAM_ATTR isr0(void* arg)
     uint64_t now = esp_timer_get_time();
     
     // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[0] < 24000ULL) {  
+    if (now - last_pulse_time[0] < MIN_PULSE_US) {  
         return;
     }
     
@@ -37,7 +38,7 @@ static void IRAM_ATTR isr1(void* arg)
     uint64_t now = esp_timer_get_time();
     
      // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[1] < 24000ULL) {  
+    if (now - last_pulse_time[1] < MIN_PULSE_US) {  
         return;
     }
 
@@ -49,7 +50,7 @@ static void IRAM_ATTR isr2(void* arg)
 {
     uint64_t now = esp_timer_get_time();
      // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
-    if (now - last_pulse_time[2] < 24000ULL) {  
+    if (now - last_pulse_time[2] < MIN_PULSE_US) {  
         return;
     }
     prev_pulse_time[2] = last_pulse_time[2];
@@ -59,6 +60,10 @@ static void IRAM_ATTR isr2(void* arg)
 static void IRAM_ATTR isr3(void* arg)
 {
     uint64_t now = esp_timer_get_time();
+      // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
+    if (now - last_pulse_time[3] < MIN_PULSE_US) {  
+        return;
+    }
     prev_pulse_time[3] = last_pulse_time[3];
     last_pulse_time[3] = now;
 }
@@ -66,6 +71,10 @@ static void IRAM_ATTR isr3(void* arg)
 static void IRAM_ATTR isr4(void* arg)
 {
     uint64_t now = esp_timer_get_time();
+  // Anti-ruido: ignorar pulsos más rápidos que ~6000-8000 RPM
+    if (now - last_pulse_time[3] < MIN_PULSE_US) {  
+        return;
+    }
     prev_pulse_time[4] = last_pulse_time[4];
     last_pulse_time[4] = now;
 }
